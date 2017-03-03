@@ -18,22 +18,24 @@ http://www.iucr.org/__data/iucr/cifdic_html/1/cif_core.dic/index.html
 for the core CIF dictionary (for data and loop tags).
 
 Reserved words
+--------------
 
-    data_<XXX>
+    data_<XXX> (case-insensitive)
     Starts a data block. <XXX> is an identifier for the current data
     block. It is followed by one or more data tags (see below) or loops
     starting with the loop_ reserved loop. The data block continues to the
     end of file or to the next data block.
 
-    loop_
+    loop_ (case-insensitive)
     A reserved word identifying a looped list of data. It is followed by a
-    loop header of white-space separated list of loop tags (see
+    loop header of a white-space separated list of loop tags (see
     below). This is followed by the loop body, which is a white-space
     separated list of values corresponding to the tags (typically this is
     formatted as one or more rows with the column corresponding to the
     tags). See the example CIF files on the wiki.
 
 Data tags
+---------
 
     _symmetry_Int_Tables_number
     Space-group number from International Tables for Crystallography
@@ -49,6 +51,7 @@ Data tags
     in degree.
 
 Loop tags
+---------
 
     _atom_site_label
     A unique identifier for a particular site in the crystal. Typically
@@ -80,3 +83,8 @@ Loop tags
     _atom_site_occupancy (optional)
     The fraction of the atom type present at this site. The sum of the
     occupancies of all the atom types at this site may not exceed 1.0.
+
+Values
+------
+Data values for data and loop tags may be a number, a word or enclosed in
+single (') or double (") quotes.
