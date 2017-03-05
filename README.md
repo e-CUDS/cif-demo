@@ -7,8 +7,7 @@ Dependencies
 ============
 * PyCifRW        (https://pypi.python.org/pypi/PyCifRW/4.3)
 
-Optional dependencies
----------------------
+### Optional
 * soft5          (https://github.com/LORCENIS/soft5)
 * SimPhony CUDS
 
