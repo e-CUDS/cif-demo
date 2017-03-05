@@ -5,8 +5,12 @@ Interoperability demonstration.
 
 Dependencies
 ============
-* PyCifRW  (https://pypi.python.org/pypi/PyCifRW/4.3)
-* soft5    (https://github.com/LORCENIS/soft5)
+* PyCifRW        (https://pypi.python.org/pypi/PyCifRW/4.3)
+
+Optional dependencies
+---------------------
+* soft5          (https://github.com/LORCENIS/soft5)
+* SimPhony CUDS
 
 
 CIF tags considered in this case study
