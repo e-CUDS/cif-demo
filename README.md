@@ -9,7 +9,7 @@ Dependencies
 
 ### Optional
 * soft5          (https://github.com/LORCENIS/soft5)
-* SimPhony CUDS
+* SimPhony CUDS  (https://github.com/simphony)
 
 
 CIF tags considered in this case study
