@@ -12,7 +12,7 @@
     "properties": [
         {
             "name": "symmetry_Int_Tables_number",
-            "type": "uint8",
+            "type": "int32",
             "description": "Space-group number from International Tables for Crystallography Vol. A (2002)."
         },
         {
