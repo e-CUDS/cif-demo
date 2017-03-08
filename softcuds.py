@@ -1,3 +1,24 @@
+"""A script that converts CUDS metadata to a set of entities and relations.
+
+Points to discuss
+-----------------
+  - In the entities for the CUDS elements, how should we specify an arrays
+    of another entity?
+
+  - What is the data attribute in CUDS_ITEM?
+
+  - Where are the unit defined?
+
+  - We do some assumptions regarding dimension names, see notes in the
+    docstring for get_dims().
+
+  - Default values should be stored as special instances of the
+    entities.  Is it a good idea to avoid dependencies on SimPhoNy and
+    SOFT in this script?  If so, should we dump these default instances
+    in a json file (using the structure of instances stored in hdf5)?
+    How to deal with properties with no default value specified in CUDS?
+    Should we define a some fill values in a special entity?
+"""
 import os
 import json
 
@@ -136,12 +157,25 @@ def get_cuba_dims(cuba, key):
 
 def get_dims(key, shape, from_cuba=False):
     """Returns a list of dimensions and a dict describing the dimensions
-    for `key` and `shape`."""
-    # Note 1: This skip the length of strings. If that should be
-    #         preserved we should convert strings into an array of
-    #         type int8.
-    # Note 2: If the last dimension is 3, we assume that it is the
-    #         number of coordinates.
+    for `key` and `shape`.
+
+    Notes
+    -----
+    - CUBA strings are converted to strings of arbitrary length.
+
+    - For CUBA elements, if the last dimension is 3, we assume that it
+      is the number of coordinates.
+
+    - For CUBA elements, if the second last dimension is 3, we assume
+      that it is the number of lattice vectors.
+
+    - For CUDS elements, if the last dimension is 3, we assume that it
+      is the number of lattice vectors.
+
+    - If an element has one dimension of size 9, we assume that it is
+      the product of the number of lattice vectors times the number of
+      coordinates.
+    """
     dim_descr = {}
     dims = []
     ncoords_descr = 'Number of coordinates. Always 3.'
@@ -155,7 +189,7 @@ def get_dims(key, shape, from_cuba=False):
             else:
                 name = 'n-lattice-vectors'
                 dim_descr[name] = nlattvecs_descr
-        elif n == 3 and i == N - 2:
+        elif from_cuba and n == 3 and i == N - 2:
             name = 'n-lattice-vectors'
             dim_descr[name] = nlattvecs_descr
         elif n == 9 and N == 1:
