@@ -6,6 +6,7 @@ Interoperability demonstration.
 Dependencies
 ============
 * PyCifRW        (https://pypi.python.org/pypi/PyCifRW/4.3)
+* PyYAML         (http://pyyaml.org/)
 
 ### Optional
 * soft5          (https://github.com/LORCENIS/soft5)
