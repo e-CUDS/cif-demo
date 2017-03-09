@@ -1,16 +1,13 @@
 """A script that converts CUDS metadata to a set of entities and relations.
 
-Points to discuss
------------------
-  - In the entities for the CUDS elements, how should we specify an arrays
-    of another entity?
+Notes
+-----
+We do some assumptions regarding dimension names, see notes in the
+docstring for get_dims().
 
-  - What is the data attribute in CUDS_ITEM?
-
-  - Where are the unit defined?
-
-  - We do some assumptions regarding dimension names, see notes in the
-    docstring for get_dims().
+Further work
+------------
+  - Put this into a plugin.
 
   - Default values should be stored as special instances of the
     entities.  Is it a good idea to avoid dependencies on SimPhoNy and
@@ -225,6 +222,15 @@ def get_dims(key, shape, from_cuba=False):
     return dims, dim_descr
 
 
+#def get_cuds_collection(name):
+#    """Returns a dict mapping CUDS names to corresponding entities."""
+#    with open(os.path.join(thisdir, 'metadata', 'cuba.yml')) as f:
+#        cuba = yaml.load(f.read())
+#    with open(os.path.join(thisdir, 'metadata', 'simphony_metadata.yml')) as f:
+#        cuds = yaml.load(f.read())
+#    entities, relations = generate_cuds_entities(cuds, cuba)
+
+
 
 
 
@@ -242,13 +248,14 @@ if __name__ == '__main__':
     # Crate CUDS entities and relations
     entities, relations = generate_cuds_entities(cuds, cuba)
 
+
+
+
     # Write CUDS entities and relations
     for entity in entities:
         with open(os.path.join(
                 thisdir, 'metadata', 'cuds_entities', '%s-%s.json' % (
                     entity['name'], entity['version'])), 'w') as f:
             json.dump(entity, f, indent=4)
-    with open(os.path.join(
-            thisdir, 'metadata', 'cuds_relations', 'cuds_relations.json'),
-              'w') as f:
+    with open(os.path.join(thisdir, 'cuds_relations.json'), 'w') as f:
         json.dump(relations, f, indent=4)

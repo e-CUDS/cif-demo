@@ -1,14 +1,31 @@
+"""
+Simple example script that reads CIF data into an abstract syntax tree
+using PyCifRW and populates an cifdata instance with this data.
+
+If the _atom_site_type_symbol is not defined in the CIF data, it is
+derived from _atom_site_label.
+
+Todo
+----
+Convert this to a proper SOFT storage plugin.
+"""
 import os
 import re
 
+import yaml
 from CifFile import ReadCif
 
 import softpy
 
+import softcuds
+
+
+# Directory holding this file
+thisdir = os.path.dirname(__file__)
 
 # Load SOFT metadata databases
 softpy.register_metadb(softpy.JSONDirMetaDB(
-    os.path.join(os.path.dirname(__file__), 'metadata')))
+    os.path.join(thisdir, 'metadata')))
 
 
 # Read cif data
@@ -36,34 +53,17 @@ for name in cifdata.soft_get_property_names():
         raise KeyError('cannot derive "%s" from cif data' % name)
     cifdata.soft_set_property(name, value)
 
-# TODO
-# - Define a CUDS
-# - Try to generate SOFT metadata corresponding to this CUDS by
-#   using the basic metadata schema
-# - Map cifdata to corresponding CUDS instance (or the other way around)
-# - Try to see formalise this mapping
+
+
+
 
 
 #----------------
 # Some testing...
 #----------------
-import numpy as np
-
-cifdata.symmetry_Int_Tables_number = np.int32('34')
 
 # Print content of cifdata
 print()
 for name in cifdata.soft_get_property_names():
     print('%38s = %-r' % (name, getattr(cifdata, name)))
-print('-' * 60)
-
-# Store the cifdata to hdf5 file
-with softpy.Storage(driver='hdf5', uri='rutile.h5') as s:
-    s.save(cifdata)
-
-# Reload and print the cifdata
-cifdata2 = CifData(uuid=cifdata.soft_get_id(), driver='hdf5',
-                   uri='rutile.h5')
-for name in cifdata2.soft_get_property_names():
-    print('%38s = %-r' % (name, getattr(cifdata2, name)))
 print('-' * 60)
