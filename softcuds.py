@@ -103,9 +103,6 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
             ))
 
         # Parse remaining items in d
-        #
-        # XXX - how to parse shape
-        # XXX - default should we create a default instance
         for k, v in d.items():
             assert k.startswith('CUBA.') or k == 'data', k
             name = stripname(k)
@@ -114,7 +111,10 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
             shape = v.get('shape', [])
             default = v.get('default', None)
             if shape == '(:)':
-                cuds_dims = ['n-%s' % k.lower().replace('_', '-')]
+                dimname = 'n-%s' % name.lower().replace('_', '-')
+                cuds_dims = [dimname]
+                dim_descr[dimname] = 'Number of %s.' % (
+                    name.lower().replace('_', ' '), )
             else:
                 cuds_dims, dd = get_dims(name, shape)
                 dim_descr.update(dd)

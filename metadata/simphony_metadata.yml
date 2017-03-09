@@ -693,3 +693,33 @@ CUDS_KEYS:
     CUBA.MAJOR:
     CUBA.PATCH:
     CUBA.FULL:
+
+
+  #############################################
+  # New stuff for lattice parameters
+  #############################################
+  CRSYTAL_SYSTEM:
+    definition: Crystal system
+    parent: CUBA.DATA_SET
+
+  CRYSTAL_GEOMETRY:
+    definition: Crystal geometry
+    parent: CUBA.CRYSTAL_SYSTEM
+
+  PRIMITIVE_CELL:
+    definition: A lattice primitive cell
+    parent: CUBA.CUDS_COMPONENT
+    CUBA.CRYSTAL_GEOMETRY:
+      default: CUBA.LATTICE_VECTORS
+
+  LATTICE_VECTORS:
+    definition: Lattice vectors
+    parent: CUBA.CRYSTAL_GEOMETRY
+    CUBA.VECTOR:
+      shape: [3]
+
+  LATTICE_PARAMETERS:
+    definition: The 6 lattice parameters, a, b, c, alpha, beta, gamma
+    parent: CUBA.CRYSTAL_GEOMETRY
+    CUBA.LATTICE_PARAMETER:
+      shape: [6]
