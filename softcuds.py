@@ -53,6 +53,7 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
     dimentions of length 3 corresponds to "n-coords".
     """
     cubadict = cuba['CUBA_KEYS']
+    cudsdict = cuds['CUDS_KEYS']
 
     relations = []
     entities = []
@@ -62,7 +63,7 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
         properties = []
         description = d.pop('definition')
         parent = d.pop('parent')
-        data = d.pop('data', None)  # XXX - what is data???
+        data = d.pop('data', None)
         models = d.pop('models', [])
         physics_equations = d.pop('physics_equations', [])
         variables = d.pop('variables', [])
@@ -70,6 +71,13 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
         if parent:
             relations.append(dict(
                 subject=stripname(parent), predicate='parent-of', object=key))
+
+        if data is not None:
+            properties.append(dict(
+                name='data',
+                type='string',
+                description='Generic data storage.',
+            ))
 
         for model in models:
             relations.append(dict(
@@ -97,17 +105,16 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
         # Parse remaining items in d
         #
         # XXX - how to parse shape
-        # XXX - default should create a default instance
+        # XXX - default should we create a default instance
         for k, v in d.items():
-            assert k.startswith('CUBA.'), k
+            assert k.startswith('CUBA.') or k == 'data', k
             name = stripname(k)
             if v is None:
                 v = {}
             shape = v.get('shape', [])
             default = v.get('default', None)
             if shape == '(:)':
-                cuds_dims = []
-                pass  # XXX
+                cuds_dims = ['n-%s' % k.lower().replace('_', '-')]
             else:
                 cuds_dims, dd = get_dims(name, shape)
                 dim_descr.update(dd)
@@ -122,10 +129,18 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
                     dims=cuds_dims + dims,
                     description=ba['definition'],
                 ))
+            elif name in cudsdict:
+                relations.append(dict(
+                    subject=key,
+                    predicate='has-attribute',
+                    object=name))
+                for attr, val in v.items():
+                    relations.append(dict(
+                        subject='%s.%s' % (key, name),
+                        predicate='has-' + attr,
+                        object=val))
             else:
-                # XXX - how to add a possible array of references to other
-                # entities???
-                pass
+                raise('Unrecognised CUDS attribute in %r: %r' % (key, name))
 
         entities.append(dict(
             name=key,
@@ -234,5 +249,6 @@ if __name__ == '__main__':
                     entity['name'], entity['version'])), 'w') as f:
             json.dump(entity, f, indent=4)
     with open(os.path.join(
-            thisdir, 'metadata', 'cuds_relations.json'), 'w') as f:
+            thisdir, 'metadata', 'cuds_relations', 'cuds_relations.json'),
+              'w') as f:
         json.dump(relations, f, indent=4)

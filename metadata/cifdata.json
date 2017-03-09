@@ -19,36 +19,42 @@
             "name": "cell_length_a",
             "type": "double",
             "unit": "Ångström",
+            "e-cuds-map": "LATTICE_PARAMETERS[0]",
             "description": "Length of unit cell vector along the a-direction."
         },
         {
             "name": "cell_length_b",
             "type": "double",
             "unit": "Ångström",
+            "e-cuds-map": "LATTICE_PARAMETERS[1]",
             "description": "Length of unit cell vector along the b-direction."
         },
         {
             "name": "cell_length_c",
             "type": "double",
             "unit": "Ångström",
+            "e-cuds-map": "LATTICE_PARAMETERS[2]",
             "description": "Length of unit cell vector along the c-direction."
         },
         {
             "name": "cell_angle_alpha",
             "type": "double",
             "unit": "degree",
+            "e-cuds-map": "LATTICE_PARAMETERS[3]",
             "description": "Angle between unit cell vectors b and c."
         },
         {
             "name": "cell_angle_beta",
             "type": "double",
             "unit": "degree",
+            "e-cuds-map": "LATTICE_PARAMETERS[4]",
             "description": "Angle between unit cell vectors c and a."
         },
         {
             "name": "cell_angle_gamma",
             "type": "double",
             "unit": "degree",
+            "e-cuds-map": "LATTICE_PARAMETERS[5]",
             "description": "Angle between unit cell vectors a and b."
         },
         {
