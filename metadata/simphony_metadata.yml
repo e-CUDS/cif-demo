@@ -696,21 +696,19 @@ CUDS_KEYS:
 
 
   #############################################
-  # New stuff for lattice parameters
+  # New CUDS elements for crystallographic data
   #############################################
-  CRSYTAL_SYSTEM:
+
+  #
+  # Crystal system
+  # --------------
+  CRYSTAL_SYSTEM:
     definition: Crystal system
     parent: CUBA.DATA_SET
 
   CRYSTAL_GEOMETRY:
     definition: Crystal geometry
     parent: CUBA.CRYSTAL_SYSTEM
-
-  PRIMITIVE_CELL:
-    definition: A lattice primitive cell
-    parent: CUBA.CUDS_COMPONENT
-    CUBA.CRYSTAL_GEOMETRY:
-      default: CUBA.LATTICE_VECTORS
 
   LATTICE_VECTORS:
     definition: Lattice vectors
@@ -723,3 +721,88 @@ CUDS_KEYS:
     parent: CUBA.CRYSTAL_GEOMETRY
     CUBA.LATTICE_PARAMETER:
       shape: [6]
+
+
+  #
+  # Crystal symmetry
+  # ----------------
+  CRYSTAL_SYMMETRY:
+    definition: The crystal symmetry
+    parent: CUBA.CUDS_COMPONENT
+
+  SPACEGROUP:
+    definition: Space group
+    parent: CUBA.CRYSTAL_SYMMETRY
+
+  SPACEGROUP_NUMBER:
+    definition: Spacegroup number in International Tables for Crystallography Vol. A (2002)
+    parent: CUBA.SPACEGROUP
+    CUBA.SPACEGROUP_INTERNATIONAL_TABLES_NUMBER:
+      default: 1
+
+  SPACEGROUP_HERMANN_MAUGUIN_NOTATION:
+    definition: The spacegroup in Hermann-Mauguin notation
+    parent: CUBA.SPACEGROUP
+    CUBA.SPACEGROUP_HERMANN_MAUGUIN_SYMBOL:
+
+  SPACEGROUP_HALL_NOTATION:
+    definition: The spacegroup in Hall notation
+    parent: CUBA.SPACEGROUP
+    CUBA.SPACEGROUP_HALL_SYMBOL:
+
+  # todo: add a way to describe the crystal symmetry as a list of symmetry
+  # operations...
+
+
+  #
+  # Atom sites
+  # ----------
+  ATOM_COORDINATES:
+    definition: Atom coordinate
+    parent: CUBA.DATA_SET
+
+  ATOM_CARTESIAN_COORDINATES:
+    definition: Atom position in Cartesian coordinates
+    parent: CUBA.ATOM_COORDINATES
+    CUBA.POSITION:
+
+  ATOM_SCALED_COORDINATES:
+    definition: Atom position in scaled coordinates
+    parent: CUBA.ATOM_COORDINATES
+    CUBA.SCALED_POSITION:
+
+  ATOM_SITE:
+    definition: Atom site
+    parent: CUBA.DATA_SET
+    CUBA.CHEMICAL_SPECIE:
+    CUBA.OCCUPANCY:
+      default: 1.0
+    CUBA.ATOM_COORDINATES:
+
+  ATOM_SITE_SYMMETRY:
+    definition: Site-symmetry of an atom site
+    parent: ATOM_SITE
+    CUBA.ATOM_SITE_WYCKOFF_SYMBOL:
+    CUBA.ATOM_SITE_SYMMETRY_MULTIPLICITY:
+      default: 1
+
+  ATOM_SITES:
+    definition: Atom sites
+    parent: CUBA.DATA_SET
+    CUBA.ATOM_SITE:
+      shape: (:)
+
+  ATOM_IRREDUCIBLE_SITES:
+    definition: Only the irreducible atom sites
+    parent: CUBA.ATOM_SITES
+
+
+  #
+  # Crystal structure
+  # -----------------
+  CRYSTAL_STRUCTURE:
+    definition: Crystal structure
+    parent: CUBA.CUDS_COMPONENT
+    CUBA.CRYSTAL_GEOMETRY:
+    CUBA.CRYSTAL_SYMMETRY:
+    CUBA.ATOM_SITES:

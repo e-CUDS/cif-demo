@@ -1,29 +1,23 @@
 """A script that converts CUDS metadata to a set of entities and relations.
-
-Notes
------
-We do some assumptions regarding dimension names, see notes in the
-docstring for get_dims().
-
-Further work
-------------
-  - Put this into a plugin.
-
-  - Default values should be stored as special instances of the
-    entities.  Is it a good idea to avoid dependencies on SimPhoNy and
-    SOFT in this script?  If so, should we dump these default instances
-    in a json file (using the structure of instances stored in hdf5)?
-    How to deal with properties with no default value specified in CUDS?
-    Should we define a some fill values in a special entity?
 """
+from __future__ import print_function
+
 import os
+import sys
 import json
+import ast
+from io import StringIO, BytesIO
 
 import yaml
 
 
+class CUDSError(Exception):
+    pass
 
-def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
+
+
+def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata',
+                           include_parent=True):
     """Convert `cuds` and `cuba` to entities and relations.
 
     Parameters
@@ -36,6 +30,9 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
         a Python dict.
     namespace : string
         Namespace for the generated entities.
+    include_parent : bool
+        Whether to include the attributes of the parents in the generated
+        entities.
 
     Returns
     -------
@@ -55,19 +52,19 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
     relations = []
     entities = []
 
-    for key, d in cuds['CUDS_KEYS'].items():
+    for key in cuds['CUDS_KEYS'].keys():
+        d = get_element_dict(cuds, key, include_parent)
         dim_descr = {}  # maps dimension names to descriptions
         properties = []
         description = d.pop('definition')
-        parent = d.pop('parent')
+        parent = d.pop('parent', None)
         data = d.pop('data', None)
         models = d.pop('models', [])
         physics_equations = d.pop('physics_equations', [])
         variables = d.pop('variables', [])
 
         if parent:
-            relations.append(dict(
-                subject=stripname(parent), predicate='parent-of', object=key))
+            relations.append((stripname(parent), 'parent-of', key))
 
         if data is not None:
             properties.append(dict(
@@ -77,14 +74,10 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
             ))
 
         for model in models:
-            relations.append(dict(
-                subject=key, predicate='submodel-of', object=stripname(model)))
+            relations.append((key, 'submodel-of', stripname(model)))
 
         for eq in physics_equations:
-            relations.append(dict(
-                subject=key,
-                predicate='physics_equation-of',
-                object=stripname(eq)))
+            relations.append((key, 'physics_equation-of', stripname(eq)))
 
         for variable in variables:
             name = stripname(variable)
@@ -107,15 +100,17 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
                 v = {}
             shape = v.get('shape', [])
             default = v.get('default', None)
-            if shape == '(:)':
-                dimname = 'n-%s' % name.lower().replace('_', '-')
-                cuds_dims = [dimname]
-                dim_descr[dimname] = 'Number of %s.' % (
-                    name.lower().replace('_', ' '), )
-            else:
-                cuds_dims, dd = get_dims(name, shape)
-                dim_descr.update(dd)
             if name in cubadict:
+                if shape == '(:)':
+                    dimname = 'n-%s' % name.lower().replace('_', '-')
+                    cuds_dims = [dimname]
+                    plural_s = '' if name.lower().endswith('s') else 's'
+                    dim_descr[dimname] = 'Number of %s%s.' % (
+                        name.lower().replace('_', ' '), plural_s)
+                else:
+                    cuds_dims, dd = get_dims(name, shape)
+                    dim_descr.update(dd)
+
                 ba = cubadict[name]
                 dims, dd = get_cuba_dims(cuba, name)
                 dim_descr.update(dd)
@@ -127,17 +122,16 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
                     description=ba['definition'],
                 ))
             elif name in cudsdict:
-                relations.append(dict(
-                    subject=key,
-                    predicate='has-attribute',
-                    object=name))
+                relations.append((key, 'has-attribute', name))
                 for attr, val in v.items():
-                    relations.append(dict(
-                        subject='%s.%s' % (key, name),
-                        predicate='has-' + attr,
-                        object=val))
+                    #print('*** %s.%s: %s = %r' % (key, name, attr, val))
+                    if not val:
+                        val = ''
+                    relations.append(
+                        ('%s.%s' % (key, name), 'has-' + attr, str(val)))
             else:
-                raise('Unrecognised CUDS attribute in %r: %r' % (key, name))
+                raise CUDSError('Unrecognised CUDS attribute in %r: %r' % (
+                    key, name))
 
         entities.append(dict(
             name=key,
@@ -150,6 +144,22 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata'):
             ))
 
     return entities, relations
+
+
+def get_element_dict(cuds, key, include_parent):
+    """Returns a dict with the content of the CUDS element `key`.  If
+    `include_parent` is true, the attributes of parent elements will
+    also be included."""
+    cudsdict = cuds['CUDS_KEYS']
+    element_dict = cudsdict[key].copy()
+    if include_parent:
+        parent = element_dict.pop('parent')
+        while parent:
+            parentdict = cudsdict[stripname(parent)]
+            for k, v in parentdict.items():
+                element_dict.setdefault(k, v)
+            parent = element_dict.pop('parent')
+    return element_dict
 
 
 def stripname(name):
@@ -222,16 +232,192 @@ def get_dims(key, shape, from_cuba=False):
     return dims, dim_descr
 
 
-#def get_cuds_collection(name):
-#    """Returns a dict mapping CUDS names to corresponding entities."""
-#    with open(os.path.join(thisdir, 'metadata', 'cuba.yml')) as f:
-#        cuba = yaml.load(f.read())
-#    with open(os.path.join(thisdir, 'metadata', 'simphony_metadata.yml')) as f:
-#        cuds = yaml.load(f.read())
-#    entities, relations = generate_cuds_entities(cuds, cuba)
+def write_cuds_entities(path, include_parent=True):
+    """Write all CUDS entities to directory
+
+         `path`/`version`/
+
+    where `path` is the argument and  `version` is the CUDS version.
+    The entities are written in JSON format.
+
+    In addition all relations are written to a file named
+
+        `path`/relations-`version`.json
+
+    If `include_parent` is true, the generated CUDS element entities
+    will also include attributes of their parent.
+    """
+    # Read CUBA and CUDS definitions
+    with open(os.path.join(thisdir, 'metadata', 'cuba.yml')) as f:
+        cuba = yaml.load(f.read())
+    with open(os.path.join(thisdir, 'metadata', 'simphony_metadata.yml')) as f:
+        cuds = yaml.load(f.read())
+
+    # Crate CUDS entities and relations
+    entities, relations = generate_cuds_entities(
+        cuds, cuba, include_parent=include_parent)
+
+    # Create directories
+    version = cuds['VERSION']
+    dirname = os.path.join(path, version)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    # Write CUDS element entities
+    for entity in entities:
+        fname = entity['name'] + '.json'
+        with open(os.path.join(path, version, fname), 'w') as f:
+            json.dump(entity, f, indent=4)
+
+    # Write relations
+    fname = 'relations-%s.json' % version
+    with open(os.path.join(path, fname), 'w') as f:
+        json.dump(relations, f, indent=4)
 
 
+def get_cuds_collection(include_parent=True):
+    """Returns Collection holding the CUDS metadata.
 
+    If `include_parent` is true, the generated CUDS element entities
+    will also include attributes of their parent.
+
+    Note, this requires softpy.
+    """
+    import softpy
+    with open(os.path.join(thisdir, 'metadata', 'cuba.yml')) as f:
+        cuba = yaml.load(f.read())
+    with open(os.path.join(thisdir, 'metadata', 'simphony_metadata.yml')) as f:
+        cuds = yaml.load(f.read())
+    entities, relations = generate_cuds_entities(cuds, cuba,
+                                                 include_parent=include_parent)
+
+    uuid = softpy.uuid_from_entity('CUDS', '1.0', 'http://emmc.info/meta')
+    c = softpy.Collection(uuid=uuid)
+    c.name = 'CUDS'
+    c.version = cuds['VERSION']
+    for jsondict in entities:
+        entity = softpy.entity(jsondict)
+        c.add(entity.name, entity)
+    for relation in relations:
+        c.add_relation(*relation)
+
+    # Save all metadata in a database
+    s = StringIO() if sys.version_info.major >= 3 else BytesIO()
+    json.dump(entities, s)
+    s.seek(0)
+    softpy.register_metadb(softpy.JSONMetaDB(s))
+    s.close()
+
+    return c
+
+
+def get_cuds_instance_collection(cuds_collection, name, dimensions={},
+                                 initial_values={}):
+    """Returns a collection with an instances of the CUDS element `name`
+    and all its (nested) attributes.
+
+    Parameters
+    ----------
+    cuds_collection : Collection
+        A CUDS metadata collection as returned by
+        get_cuds_collection(include_parent=True).
+    name : string
+        The name of the CUDS instance to instantiate.
+    dimensions : dict
+        A dict with the actual size of array attributes. E.g.  for the
+        CUDS element CELL the size of its array of POINT attributes
+        can be specified with ``dimensions={'CELL.POINT': [10]}``.
+    initial_values : dict
+        Initial values of the instances.
+        Eg: ``initial_values={'CELL.POINT[0]': [0.5, 0.5, 0.0], ...}``.
+        Alternatively this could be expressed as
+        ``initial_values={'CELL.POINT': [[0.5, 0.5, 0.0], ...]}``.
+
+    Notes
+    -----
+    The label of the instance of CUDS element `name` is `name`, while
+    dot notation is used for attributes and brackets for array indices
+    (first index is zero).  E.g. point 4th POINT attribute of CELL
+    will be labeled "CELL.POINT[3]".
+
+    The following special relations will be added to the returned collection:
+      :has-attribute:  E.g. ('CELL', 'has-attribute', 'CELL.POINT[3]')
+      :is-index:       E.g. ('CELL.POINT[3]', 'is-index', '3')
+
+    The UUID of the returned collection is derived from the name, version
+    and namespace of the corresponding entity.
+
+    Requires softpy.
+    """
+    import softpy
+
+    e = cuds_collection.get_entity(name)
+    c = softpy.Collection(uuid=e.soft_metadata.get_uuid())  # returned
+
+    def get_shape(base, name, attr):
+        """Returns the shape of attribute `attr` of element `name` (under
+        `base`)"""
+        shapes = cuds_collection.find_relations(name + '.' + attr, 'has-shape')
+        if not shapes:
+            return ()
+        assert len(shapes) == 1
+        shape = shapes.pop()
+        if ':' in shape:
+            ind = base + name + '.' + attr
+            if not ind in dimensions:
+                raise KeyError('Dimension of "%s" must be provided in '
+                               '`dimensions`' % ind)
+            return dimensions[ind]
+        else:
+            return ase.literal_eval(shape)
+
+    #def get_default_attribute(name, attr, index=None):
+    #    """Returns the CUDS element name of the default attribute for `attr`
+    #    of CUDS element `name`."""
+    #    pass
+
+    #def get_value(base, name, attr, index=None):
+    #    ind = base + name '.' + attr
+    #    indx = ind if index is None else '%s[%d]' % (ind, index)
+    #    if indx in initial_values:
+    #        return initial_values[indx]
+    #    elif ind in initial_values:
+    #        return initial_values[ind]
+    #    else:
+    #        aname = name + '.' + attr
+    #        defaults = cuds_collection.find_relations(aname, 'has-default')
+    #        if not defaults:
+    #            return None
+    #        assert len(defaults) == 1
+    #        return ast.literal_eval(defaults.pop())
+
+    def add_cuds_element(base, name, index=None, defaults={}):
+        """Create an instance of CUDS element `name` with label base.name or
+        base.name[index] depending on whether `index` ig given."""
+        label = base + name + repr(list(index)) if index else base + name
+        entity = cuds_collection.get_entity(name)
+        instance = entity()
+        #for k, v in defaults.items():
+        #    instance.soft_set_property(k, v)
+        c.add(label, instance)
+        for attr in cuds_collection.find_relations(name, 'has-attribute'):
+            shape = get_shape(base, name, attr)
+            assert len(shape) < 2, 'only scalar and 1D shapes are supported'
+            #value = get_value(base, name, attr)
+            if len(shape) == 0:
+                add_cuds_element(label + '.', attr)
+                c.add_relation(label, 'has-attribute', label + '.' + attr)
+            elif len(shape) == 1:
+                for i in range(shape[0]):
+                    add_cuds_element(label + '.', attr, index=[i])
+                    c.add_relation(
+                        label, 'has-attribute', '%s.%s[%d]' % (label, attr, i))
+            else:
+                raise NotImplementedError(
+                    'only 0D and 1D attribute shapes are supported')
+
+    add_cuds_element('', name)
+    return c
 
 
 if __name__ == '__main__':
@@ -249,13 +435,32 @@ if __name__ == '__main__':
     entities, relations = generate_cuds_entities(cuds, cuba)
 
 
-
-
     # Write CUDS entities and relations
-    for entity in entities:
-        with open(os.path.join(
-                thisdir, 'metadata', 'cuds_entities', '%s-%s.json' % (
-                    entity['name'], entity['version'])), 'w') as f:
-            json.dump(entity, f, indent=4)
-    with open(os.path.join(thisdir, 'cuds_relations.json'), 'w') as f:
-        json.dump(relations, f, indent=4)
+    write_cuds_entities(os.path.join(thisdir, 'metadata', 'cuds_entities'))
+
+    import softpy
+
+    # Create a collection with all CUDS entities and relations
+    c = get_cuds_collection()
+    with softpy.Storage(driver='hdf5',
+                        uri='softcuds.h5',
+                        #options='append=yes',
+    ) as s:
+        c.save(s)
+
+
+    # Create a collection of CUDS instances
+    ci = get_cuds_instance_collection(
+        cuds_collection=c,
+        name='CRYSTAL_STRUCTURE',
+        dimensions={'CRYSTAL_STRUCTURE.ATOM_SITES.ATOM_SITE': [2]},
+        initial_values={})
+
+    print('labels:\n', ci.get_labels())
+    crystal_structure = ci.get_entity('CRYSTAL_STRUCTURE')
+
+    #with softpy.Storage(driver='hdf5',
+    #                    uri='instances.h5',
+    #                    #options='append=yes',
+    #) as s:
+    #    ci.save(s)

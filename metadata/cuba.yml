@@ -516,3 +516,36 @@ CUBA_KEYS:
   LATTICE_PARAMETER:
     definition: A lattice parameter to define a Bravais Lattice
     type: double
+
+
+  #
+  # New CUBA elements for crystallographic data
+  # ===========================================
+
+  SPACEGROUP_INTERNATIONAL_TABLES_NUMBER:
+    definition: Spacegroup number in International Tables for Crystallography Vol. A (2002)
+    type: integer
+
+  SPACEGROUP_HERMANN_MAUGUIN_SYMBOL:
+    definition: Spacegroup symbol in Hermann-Mauguin notation
+    length: 12
+    type: string
+
+  SPACEGROUP_HALL_SYMBOL:
+    definition: Spacegroup symbol in Hall notation
+    length: 12
+    type: string
+
+  ATOM_SITE_WYCKOFF_SYMBOL:
+    definition: Wyckoff symbol (letter) as listed in the space-group tables of International Tables for Crystallography Vol. A (2002).
+    length: 1
+    type: string
+
+  ATOM_SITE_SYMMETRY_MULTIPLICITY:
+    definition: Atom site symmetry multiplicity
+    type: integer
+
+  SCALED_POSITION:
+    definition: Position of a point or node or atom as a fraction of the cell
+    shape: [3]
+    type: double

@@ -23,9 +23,14 @@ import softcuds
 # Directory holding this file
 thisdir = os.path.dirname(__file__)
 
-# Load SOFT metadata databases
+# Load SOFT metadata database
 softpy.register_metadb(softpy.JSONDirMetaDB(
     os.path.join(thisdir, 'metadata')))
+
+# Load CUDS metadata database (created by softcuds.py)
+softpy.register_metadb(softpy.JSONDirMetaDB(
+    os.path.join(thisdir, 'metadata', 'cuds_entities')))
+
 
 
 # Read cif data
@@ -54,6 +59,11 @@ for name in cifdata.soft_get_property_names():
     cifdata.soft_set_property(name, value)
 
 
+# Define converter from CifData to CUDS
+def cif2cuds_converter(cifdata):
+    """Returns a list of instances of CUDS element entities representing
+    the data in `cifdata`."""
+    uuid = softpy.uuid_from_entity('CUDS', '1.0', 'http://emmc.info/meta')
 
 
 
@@ -67,3 +77,7 @@ print()
 for name in cifdata.soft_get_property_names():
     print('%38s = %-r' % (name, getattr(cifdata, name)))
 print('-' * 60)
+
+
+uuid = softpy.uuid_from_entity('CUDS', '1.0', 'http://emmc.info/meta')
+c = softpy.Collection(uuid=uuid, driver='hdf5', uri='softcuds.h5')
