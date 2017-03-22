@@ -1,0 +1,107 @@
+{
+    "schema_name": "workflow_schema",
+    "schema_version": "0.2",
+    "schema_namespace": "http://meta.emmc.eu",
+    "schema_description": "Define the semantics schema for workflows using the concepts of state machines.  The states typically represents models and transitions how they are connected.",
+    "schema_dimensions": [
+    	{
+    	    "schema_name": "n-states",
+    	    "schema_description": "Number of states, ."
+    	}
+    ],
+    "schema_forms": [
+	{
+	    "schema_name": "state",
+	    "schema_version": "0.2",
+	    "schema_namespace": "http://meta.emmc.eu/workflow_schema",
+	    "schema_description": "Defines a state (typically a model) in the workflow.",
+	    "schema_dimensions": [
+		{
+		    "schema_name": "n-transitions",
+		    "schema_description": "http://meta.emmc.eu/basic_type/alphanumeric/1.0"
+		}
+	    ],
+	    "schema_properties": [
+		{
+		    "schema_name": "name",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "schema_description": "Name of the state."
+		},
+		{
+		    "schema_name": "type",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "description": "Type of state. XXX - do we really need this?"
+		},
+		{
+		    "schema_name": "transitions",
+		    "schema_type": "http://meta.emmc.eu/workflow_schema/transition/0.2",
+		    "description": "Array of possible transitions from the state."
+		},
+		{
+		    "schema_name": "description",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "description": "Description of the state."
+		}
+	    ],
+	    "schema_relations": []
+	},
+	{
+	    "schema_name": "transition",
+	    "schema_version": "0.2",
+	    "schema_namespace": "http://meta.emmc.eu/workflow_schema",
+	    "schema_description": "Defines a transition from the current to the target state that is triggered by the given event.  XXX - should the reference from target to a state be described with a relation?",
+	    "schema_dimensions": [],
+	    "schema_properties": [
+		{
+		    "schema_name": "target",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "schema_description": "Name of target state."
+		},
+		{
+		    "schema_name": "event",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "schema_description": "Name of the event that triggers this transition."
+		},
+		{
+		    "schema_name": "description",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "schema_description": "Description of the transition."
+		}
+	    ],
+	    "schema_relations": []
+	}
+    ],
+    "schema_properties": [
+	{
+	    "schema_name": "name",
+	    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+	    "description": "Workflow name."
+	},
+	{
+	    "schema_name": "version",
+	    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+	    "description": "Workflow version."
+	},
+	{
+	    "schema_name": "namespace",
+	    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+	    "description": "Workflow namespace."
+	},
+	{
+	    "schema_name": "description",
+	    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+	    "description": "Description of the workflow."
+	},
+	{
+	    "schema_name": "initial_state",
+	    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+	    "description": "Name of initial state - XXX do we need a relation for this reference?"
+	},
+	{
+	    "schema_name": "states",
+	    "schema_type": "http://meta.emmc.eu/workflow_schema/state/0.2",
+	    "schema_dimensions": ["n-states"],
+	    "description": "Array of all states in the workflow."
+	}
+    ]
+}

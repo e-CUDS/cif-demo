@@ -1,0 +1,141 @@
+{
+    "schema_name": "schema_form",
+    "schema_version": "0.2",
+    "schema_namespace": "http://meta.emmc.eu",
+    "schema_dimensions": [
+        {
+            "schema_name": "n-dimensions",
+            "schema_description": "Number of dimensions."
+        },
+        {
+            "schema_name": "n-properties",
+            "schema_description": "Number of properties."
+    },
+        {
+            "schema_name": "n-relations",
+            "schema_description": "Number of relations."
+        }
+    ],
+    "schema_forms": [
+        {
+            "schema_name": "schema_form",
+            "schema_version": "0.2",
+            "schema_namespace": "http://meta.emmc.eu/schema_form",
+            "schema_description": "Definition of the form through its name, version and namespace.",
+            "schema_properties": [],
+            "schema_relations": []
+        },
+        {
+            "schema_name": "schema_dimension",
+            "schema_version": "0.2",
+            "schema_namespace": "http://meta.emmc.eu/schema_form",
+            "schema_description": "Definition of a dimension.",
+            "schema_properties": [
+                {
+                    "schema_name": "schema_name",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Name of the dimension."
+                },
+                {
+                    "schema_name": "schema_description",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Description of the dimension."
+                }
+            ],
+            "schema_relations": []
+        },
+        {
+            "schema_name": "schema_property",
+            "schema_version": "0.2",
+            "schema_namespace": "http://meta.emmc.eu/schema_form",
+            "schema_description": "Definition of a property.",
+            "schema_properties": [
+                {
+                    "schema_name": "schema_name",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Name of the property."
+                },
+                {
+                    "schema_name": "schema_type",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Type of the property, typically expressed as an url to one of the basic types."
+                },
+                {
+                    "schema_name": "schema_description",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Description of the property."
+                },
+                {
+                    "schema_name": "schema_dimensions",
+                    "schema_type": "http://meta.emmc.eu/basic_type/dimension/0.2",
+                    "schema_description": "Array of dimension names for the property."
+                }
+            ],
+            "schema_relations": []
+        },
+        {
+            "schema_name": "schema_relation",
+            "schema_version": "0.2",
+            "schema_namespace": "http://meta.emmc.eu/schema_form",
+            "schema_properties": [
+                {
+                    "schema_name": "schema_predicate",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "String identifying the relation, typically the predicate in (subject, predicate, object)-triplets."
+                },
+                {
+                    "schema_name": "schema_description",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Description of the relation."
+                },
+                {
+                    "schema_name": "schema_forms",
+                    "schema_type": "http://meta.emmc.eu/schema_form",
+                    "schema_description": "Array of forms taking part in the relation. Should be 2 or more."
+                }
+            ],
+            "schema_relations": []
+        }
+    ],
+    "schema_properties": [
+        {
+            "schema_name": "schema_name",
+            "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+            "schema_description": "Name of the schema."
+        },
+        {
+            "schema_name": "schema_version",
+            "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+            "schema_description": "Version of the schema."
+        },
+        {
+            "schema_name": "schema_namespace",
+            "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+            "schema_description": "Namespace of the schema."
+        },
+        {
+            "schema_name": "schema_description",
+            "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+            "schema_description": "Description of the schema."
+        },
+        {
+            "schema_name": "schema_dimensions",
+            "schema_type": "http://meta.emmc.eu/schema_form/dimension/0.2",
+            "schema_dimensions": ["n-dimensions"],
+            "schema_description": "Dimensions of the schema."
+        },
+        {
+            "schema_name": "schema_properties",
+            "schema_type": "http://meta.emmc.eu/schema_form/property/0.2",
+            "schema_dimensions": ["n-properties"],
+            "schema_description": "Properties of the schema."
+        },
+        {
+            "schema_name": "schema_relations",
+            "schema_type": "http://meta.emmc.eu/schema_form/relation/0.2",
+            "schema_dimensions": ["n-relations"],
+            "schema_description": "Relations of the schema."
+        }
+    ],
+    "schema_relations": []
+}

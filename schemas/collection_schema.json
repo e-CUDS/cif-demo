@@ -1,0 +1,196 @@
+{
+    "schema_name": "collection_schema",
+    "schema_version": "0.5",
+    "schema_namespace": "http://meta.emmc.eu",
+    "schema_description": "Definition of the Collection.",
+    "schema_dimensions": [
+        {
+            "schema_name": "n-dimensions",
+            "schema_description": "Number of dimensions."
+        },
+        {
+            "schema_name": "n-instance-refs",
+            "schema_description": "Number of instances."
+        },
+        {
+            "schema_name": "n-dim-maps",
+            "schema_description": "Number of dimension maps."
+        },
+        {
+            "schema_name": "n-relations",
+            "schema_description": "Number of relations."
+        }
+    ],
+    "schema_forms": [
+        {
+            "schema_name": "dimension",
+            "schema_version": "0.5",
+            "schema_namespace": "http://meta.emmc.eu/collection_form",
+            "schema_description": "Definition of a dimension.",
+            "schema_properties": [
+                {
+                    "schema_name": "name",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Name of the dimension."
+                },
+                {
+                    "schema_name": "description",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Description of the dimension."
+                }
+            ],
+            "schema_relations": []
+        },
+        {
+            "schema_name": "instance-ref",
+            "schema_version": "0.5",
+            "schema_namespace": "http://meta.emmc.eu/collection_form",
+            "schema_description": "Reference to an instance, typically of an Entity or another Collection (but may also refer to metadata).",
+            "schema_properties": [
+                {
+                    "schema_name": "label",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "A label local to this Collection associated with an instance."
+                },
+                {
+                    "schema_name": "guid",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Global unique identifier for the instance.  For a data object, this is its uuid, but it is also possible to refer to metadata via its (name, version, namespace)."
+                },
+                {
+                    "schema_name": "name",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Name of the instance's metadata."
+                },
+                {
+                    "schema_name": "version",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Version of the instance's metadata."
+                },
+                {
+                    "schema_name": "namespace",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Namespace of the instance's metadata."
+                },
+                {
+                    "schema_name": "description",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Description of the instance."
+                }
+            ],
+            "schema_relations": []
+        },
+        {
+            "schema_name": "dim-map",
+            "schema_version": "0.5",
+            "schema_namespace": "http://meta.emmc.eu/collection_form",
+            "schema_description": "Relates a dimension in an instance to a dimension in this Collection.",
+            "schema_properties": [
+                {
+                    "schema_name": "label",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "A label referring to a label of an instance-ref."
+                },
+                {
+                    "schema_name": "label-dim-name",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Name of a dimension in the instance referred to by 'label'."
+                },
+                {
+                    "schema_name": "collection-dim-name",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Name of a dimension in this Collection."
+                }
+            ],
+            "schema_relations": [
+            ]
+        },
+        {
+            "schema_name": "relation",
+            "schema_version": "0.5",
+            "schema_namespace": "http://meta.emmc.eu/collection_form",
+            "schema_description": "Definition of a subject-predicate-object relation triplet between two instances.",
+            "schema_properties": [
+                {
+                    "schema_name": "subject",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Label referring to the label of the instance-ref for the subject."
+                },
+                {
+                    "schema_name": "predicate",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "String identifying the predicate."
+                },
+                {
+                    "schema_name": "object",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Label referring to the label of the instance-ref for the object."
+                },
+                {
+                    "schema_name": "description",
+                    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+                    "schema_description": "Description of the relation."
+                }
+            ],
+            "schema_relations": [
+		{
+		    "schema_predicate": "refers to",
+		    "schema_description": "Relates the subject an entity reference through its label.  FIXME - should the elements in schema_forms below be real forms?",
+		    "schema_forms": [
+			{
+			    "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+			    "http://meta.emmc.eu/collection_form/instance-ref/0.5"
+			}
+		    ]
+		}
+            ]
+        }
+    ],
+    "schema_properties": [
+        {
+            "schema_name": "name",
+            "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+            "schema_description": "Name of the Collection."
+        },
+        {
+            "schema_name": "version",
+            "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+            "schema_description": "Version of the Collection."
+        },
+        {
+            "schema_name": "namespace",
+            "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+            "schema_description": "Namespace of the Collection."
+        },
+        {
+            "schema_name": "description",
+            "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+            "schema_description": "Description of the Collection."
+        },
+        {
+            "schema_name": "dimensions",
+            "schema_type": "http://meta.emmc.eu/collection_form/dimension/0.5",
+            "schema_dimensions": ["n-dimensions"],
+            "schema_description": "Array of dimensions defined in this Collection used for dimension mapping."
+        },
+        {
+            "schema_name": "instance-refs",
+            "schema_type": "http://meta.emmc.eu/collection_form/instance-ref/0.5",
+            "schema_dimensions": ["n-instance-refs"],
+            "schema_description": "Array of instance references."
+        },
+        {
+            "schema_name": "dim-maps",
+            "schema_type": "http://meta.emmc.eu/collection_form/dim-map/0.5",
+            "schema_dimensions": ["n-dim-maps"],
+            "schema_description": "Array of dimension maps."
+        },
+        {
+            "schema_name": "relations",
+            "schema_type": "http://meta.emmc.eu/collection_form/relation/0.5",
+            "schema_dimensions": ["n-relations"],
+            "schema_description": "Array of relations."
+        }
+    ],
+    "schema_relations": []
+}

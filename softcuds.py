@@ -6,6 +6,7 @@ import os
 import sys
 import json
 import ast
+import re
 from io import StringIO, BytesIO
 
 import yaml
@@ -492,15 +493,24 @@ def serialize_cuds_instance_collection(ci):
         inst = ci.get_instance(label)
         d = {k: str(inst.soft_get_property(k))
              for k in inst.soft_get_property_names()}
+        dd = {}
         for attr_label in ci.find_relations(label, 'has-attribute'):
             attr = attr_label[attr_label.rindex('.') + 1: ]
-            d[attr] = dictrepr(attr_label)
+            if attr.endswith(']'):
+                attr, n = re.match(r'([^[]+)\[(\d+)\]', attr).groups()
+                if not attr in dd:
+                    dd[attr] = {}
+                dd[attr][int(n)] = dictrepr(attr_label)
+            else:
+                d[attr] = dictrepr(attr_label)
+        for attr in dd:
+            d[attr] = [dd[attr][n] for n in range(len(dd[attr]))]
         return d
 
     for root in root_elements:
         baselist.append(dictrepr(root))
-    #return yaml.dump(baselist)
-    return json.dumps(baselist, indent=2)
+    return yaml.dump(baselist, default_flow_style=False)
+    #return json.dumps(baselist, indent=4)
 
 
 

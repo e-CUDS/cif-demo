@@ -1,0 +1,98 @@
+{
+    "schema_name": "entity_schema",
+    "schema_version": "0.3",
+    "schema_namespace": "http://meta.emmc.eu",
+    "schema_dimensions": [
+    	{
+    	    "schema_name": "n-dimensions",
+    	    "schema_description": "Number of dimensions."
+    	},
+    	{
+    	    "schema_name": "n-properties",
+    	    "schema_description": "Number of properties."
+    	}
+    ],
+    "schema_forms": [
+	{
+	    "schema_name": "dimension",
+	    "schema_version": "0.3",
+	    "schema_namespace": "http://meta.emmc.eu/entity_schema",
+	    "schema_properties": [
+		{
+		    "schema_name": "name",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0"
+		},
+		{
+		    "schema_name": "description",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0"
+		}
+	    ]
+	},
+	{
+	    "schema_name": "property",
+	    "schema_version": "0.3",
+	    "schema_namespace": "http://meta.emmc.eu/entity_schema",
+	    "schema_properties": [
+		{
+		    "schema_name": "name",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "description": "Name of the property."
+		},
+		{
+		    "schema_name": "type",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "description": "Type of the property, normally referring to a basic type defined at http://meta.emmc.eu/basic_type."
+		},
+		{
+		    "schema_name": "unit",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "description": "Unit of the property. Set it to an empty string for dimensionless properties."
+		},
+		{
+		    "schema_name": "dims",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "description": "Array of dimension labels. Optional."
+		},
+		{
+		    "schema_name": "description",
+		    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+		    "description": "Description of the property."
+		}
+	    ]
+	}
+    ],
+    "schema_properties": [
+	{
+	    "schema_name": "name",
+	    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+	    "description": "Entity name."
+	},
+	{
+	    "schema_name": "version",
+	    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+	    "description": "Entity version."
+	},
+	{
+	    "schema_name": "namespace",
+	    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+	    "description": "Entity namespace."
+	},
+	{
+	    "schema_name": "description",
+	    "schema_type": "http://meta.emmc.eu/basic_type/alphanumeric/1.0",
+	    "description": "Entity description."
+	},
+	{
+	    "schema_name": "dimensions",
+	    "schema_type": "http://meta.emmc.eu/entity_schema/dimension/0.3",
+	    "schema_dimensions": ["ndimensions"],
+	    "description": "Array of entity dimension labels."
+	},
+	{
+	    "schema_name": "properties",
+	    "schema_type": "http://meta.emmc.eu/entity_schema/property/0.3",
+	    "schema_dimensions": ["nproperties"],
+	    "description": "Key-value list of entity properties."
+	}
+    ]
+}
