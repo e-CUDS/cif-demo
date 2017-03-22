@@ -778,6 +778,7 @@ CUDS_KEYS:
     CUBA.OCCUPANCY:
       default: 1.0
     CUBA.ATOM_COORDINATES:
+      default: CUBA.ATOM_SCALED_COORDINATES
 
   ATOM_SITE_SYMMETRY:
     definition: Site-symmetry of an atom site
@@ -804,5 +805,7 @@ CUDS_KEYS:
     definition: Crystal structure
     parent: CUBA.CUDS_COMPONENT
     CUBA.CRYSTAL_GEOMETRY:
+      default: CUBA.LATTICE_PARAMETERS
     CUBA.CRYSTAL_SYMMETRY:
+      default: CUBA.SPACEGROUP_NUMBER
     CUBA.ATOM_SITES:

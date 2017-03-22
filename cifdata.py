@@ -29,7 +29,7 @@ softpy.register_metadb(softpy.JSONDirMetaDB(
 
 # Load CUDS metadata database (created by softcuds.py)
 softpy.register_metadb(softpy.JSONDirMetaDB(
-    os.path.join(thisdir, 'metadata', 'cuds_entities')))
+    os.path.join(thisdir, 'metadata', 'cuds_entities', '1.0')))
 
 
 
@@ -59,11 +59,62 @@ for name in cifdata.soft_get_property_names():
     cifdata.soft_set_property(name, value)
 
 
+
+def set_attributes(collection, label, **kw):
+    """In instance `label` of `collection`, set attributes specified with
+    the keyword arguments."""
+    instance = collection.get_instance(label)
+    for k, v in kw.items():
+        instance.soft_set_property(k, v)
+    collection.add(label, instance)
+
+
+
 # Define converter from CifData to CUDS
 def cif2cuds_converter(cifdata):
     """Returns a list of instances of CUDS element entities representing
     the data in `cifdata`."""
     uuid = softpy.uuid_from_entity('CUDS', '1.0', 'http://emmc.info/meta')
+    cuds_collection = softcuds.get_cuds_collection()
+    nsites = len(cifdata.atom_site_type_symbol)
+    ci = softcuds.get_cuds_instance_collection(
+        cuds_collection=cuds_collection,
+        name='CRYSTAL_STRUCTURE',
+        dimensions={
+            'CRYSTAL_STRUCTURE.ATOM_SITES.ATOM_SITE': [nsites],
+        },
+        initial_values={})
+
+    set_attributes(
+        ci, 'CRYSTAL_STRUCTURE.SPACEGROUP_NUMBER',
+        SPACEGROUP_INTERNATIONAL_TABLES_NUMBER=cifdata.symmetry_Int_Tables_number,
+    )
+    set_attributes(
+        ci, 'CRYSTAL_STRUCTURE.LATTICE_PARAMETERS',
+        LATTICE_PARAMETER=[
+            cifdata.cell_length_a,
+            cifdata.cell_length_b,
+            cifdata.cell_length_c,
+            cifdata.cell_angle_alpha,
+            cifdata.cell_angle_beta,
+            cifdata.cell_angle_gamma,
+        ])
+    occupancy = getattr(cifdata, 'atom_site_occupancy', [1.0] * nsites)
+    for i in range(nsites):
+        set_attributes(
+            ci, 'CRYSTAL_STRUCTURE.ATOM_SITES.ATOM_SITE[%d]' % i,
+            OCCUPANCY=occupancy[i],
+            CHEMICAL_SPECIE=cifdata.atom_site_type_symbol[i],
+        )
+        set_attributes(
+            ci, 'CRYSTAL_STRUCTURE.ATOM_SITES.ATOM_SITE[%d].ATOM_SCALED_COORDINATES' % i,
+            SCALED_POSITION=[
+                cifdata.atom_site_fract_x[i],
+                cifdata.atom_site_fract_y[i],
+                cifdata.atom_site_fract_z[i],
+            ])
+
+    return ci
 
 
 
@@ -73,11 +124,12 @@ def cif2cuds_converter(cifdata):
 #----------------
 
 # Print content of cifdata
-print()
-for name in cifdata.soft_get_property_names():
-    print('%38s = %-r' % (name, getattr(cifdata, name)))
-print('-' * 60)
+#print()
+#for name in cifdata.soft_get_property_names():
+#    print('%38s = %-r' % (name, getattr(cifdata, name)))
 
+# Create a collection representing a CUDS crystal structure for the cif data
+ci = cif2cuds_converter(cifdata)
 
-uuid = softpy.uuid_from_entity('CUDS', '1.0', 'http://emmc.info/meta')
-c = softpy.Collection(uuid=uuid, driver='hdf5', uri='softcuds.h5')
+# Serialize the CUDS instance
+print(softcuds.serialize_cuds_instance_collection(ci))

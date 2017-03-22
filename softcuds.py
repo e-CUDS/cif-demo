@@ -11,6 +11,10 @@ from io import StringIO, BytesIO
 import yaml
 
 
+# Directory holding this file
+thisdir = os.path.dirname(__file__)
+
+
 class CUDSError(Exception):
     pass
 
@@ -49,6 +53,13 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata',
     cubadict = cuba['CUBA_KEYS']
     cudsdict = cuds['CUDS_KEYS']
 
+    # Maps CUBA type names to corresponding SOFT type name
+    type_mapping = {
+        'string': 'string',
+        'integer': 'int64' if sys.version_info.major >= 3 else 'int32',
+        'double': 'double',
+        }
+
     relations = []
     entities = []
 
@@ -86,7 +97,7 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata',
             dim_descr.update(dd)
             properties.append(dict(
                 name=name,
-                type=ba['type'],
+                type=type_mapping[ba['type']],
                 #unit=  # XXX - where is the unit defined???
                 dims=dims,
                 description=ba['definition'],
@@ -116,7 +127,7 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata',
                 dim_descr.update(dd)
                 properties.append(dict(
                     name=name,
-                    type=ba['type'],
+                    type=type_mapping[ba['type']],
                     #unit=  # XXX - where is the unit defined???
                     dims=cuds_dims + dims,
                     description=ba['definition'],
@@ -312,7 +323,7 @@ def get_cuds_collection(include_parent=True):
 
 
 def get_cuds_instance_collection(cuds_collection, name, dimensions={},
-                                 initial_values={}):
+                                 initial_values={}, childs={}):
     """Returns a collection with an instances of the CUDS element `name`
     and all its (nested) attributes.
 
@@ -332,6 +343,12 @@ def get_cuds_instance_collection(cuds_collection, name, dimensions={},
         Eg: ``initial_values={'CELL.POINT[0]': [0.5, 0.5, 0.0], ...}``.
         Alternatively this could be expressed as
         ``initial_values={'CELL.POINT': [[0.5, 0.5, 0.0], ...]}``.
+        NOTE: Not yet implemented.
+    childs : dict
+        A dict specifying the name of a specific child element you want
+        to instansiate instead of a default CUDS element.  Example:
+        {'CRYSTAL_STRUCTURE.ATOM_SITES.ATOM_SITE[0].ATOM_COORDINATES':
+         'ATOM_SCALED_COORDINATES'}
 
     Notes
     -----
@@ -351,7 +368,7 @@ def get_cuds_instance_collection(cuds_collection, name, dimensions={},
     """
     import softpy
 
-    e = cuds_collection.get_entity(name)
+    e = cuds_collection.get_instance(name)
     c = softpy.Collection(uuid=e.soft_metadata.get_uuid())  # returned
 
     def get_shape(base, name, attr):
@@ -371,53 +388,122 @@ def get_cuds_instance_collection(cuds_collection, name, dimensions={},
         else:
             return ase.literal_eval(shape)
 
-    #def get_default_attribute(name, attr, index=None):
-    #    """Returns the CUDS element name of the default attribute for `attr`
-    #    of CUDS element `name`."""
-    #    pass
+    def get_attr_element_name(base, name, attr, shape=()):
+        """Returns CUDS element name of attribute `attr`.
 
-    #def get_value(base, name, attr, index=None):
-    #    ind = base + name '.' + attr
-    #    indx = ind if index is None else '%s[%d]' % (ind, index)
-    #    if indx in initial_values:
-    #        return initial_values[indx]
-    #    elif ind in initial_values:
-    #        return initial_values[ind]
-    #    else:
-    #        aname = name + '.' + attr
-    #        defaults = cuds_collection.find_relations(aname, 'has-default')
-    #        if not defaults:
-    #            return None
+        If a child of `attr` is specified by the `child` argument or
+        via a default value in the definition of CUDS, return the CUDS
+        element name of the child.  Otherwise `attr` is returned."""
+        label = base + name + '.' + attr
+        while True:
+            if label in childs:
+                return childs[label]
+            if not '.' in label:
+                break
+            label = label[label.index('.') + 1: ]
+
+        defaults = cuds_collection.find_relations(
+            name + '.' + attr, 'has-default')
+        if defaults:
+            assert len(defaults) == 1
+            default = defaults.pop()
+            if shape:
+                return [k[5:] if k.startswith('CUBA.') else attr
+                        for kn in ast.literate_eval(default)]
+            elif default.startswith('CUBA.'):
+                return default[5:]
+
+        return attr
+
+    #def get_value(base, name, attr, shape=(), index=None):
+    #    """Returns initial value of `attr` or None."""
+    #    label = base + name '.' + attr
+    #    ilabel = '%s[%s]' % (label, index) if index else label
+    #    while True:
+    #        if label in initial_values:
+    #            return initial_values[label]
+    #        elif ilabel in initial_values:
+    #            return initial_values[ilabel]
+    #        if not '.' in label:
+    #            break
+    #        label = label[label.index('.') + 1: ]
+    #
+    #    defaults = cuds_collection.find_relations(
+    #        name + '.' + attr, 'has-default')
+    #    if defaults:
     #        assert len(defaults) == 1
-    #        return ast.literal_eval(defaults.pop())
+    #        default = defaults.pop()
+    #        if shape:
+    #            return [k[5:] if k.startswith('CUBA.') else attr
+    #                    for kn in ast.literate_eval(default)]
+    #        elif default.startswith('CUBA.'):
+    #            return default[5:]
+    #
+    #    return None
 
     def add_cuds_element(base, name, index=None, defaults={}):
         """Create an instance of CUDS element `name` with label base.name or
         base.name[index] depending on whether `index` ig given."""
         label = base + name + repr(list(index)) if index else base + name
-        entity = cuds_collection.get_entity(name)
+        entity = cuds_collection.get_instance(name)
         instance = entity()
         #for k, v in defaults.items():
         #    instance.soft_set_property(k, v)
+
+        # Assign default values to some basic properties
+        defaults = dict(data='',
+                        UID=instance.soft_get_id(),
+                        NAME=label,
+                        DESCRIPTION=instance.soft_get_meta_description())
+        for k, v in defaults.items():
+            if hasattr(instance, k):
+                setattr(instance, k, v)
+
         c.add(label, instance)
         for attr in cuds_collection.find_relations(name, 'has-attribute'):
             shape = get_shape(base, name, attr)
             assert len(shape) < 2, 'only scalar and 1D shapes are supported'
+            aname = get_attr_element_name(base, name, attr, shape)
             #value = get_value(base, name, attr)
             if len(shape) == 0:
-                add_cuds_element(label + '.', attr)
-                c.add_relation(label, 'has-attribute', label + '.' + attr)
+                add_cuds_element(label + '.', aname)
+                c.add_relation(label, 'has-attribute', label + '.' + aname)
             elif len(shape) == 1:
                 for i in range(shape[0]):
-                    add_cuds_element(label + '.', attr, index=[i])
+                    add_cuds_element(label + '.', aname, index=[i])
                     c.add_relation(
-                        label, 'has-attribute', '%s.%s[%d]' % (label, attr, i))
+                        label, 'has-attribute', '%s.%s[%d]' % (label, aname, i))
             else:
                 raise NotImplementedError(
                     'only 0D and 1D attribute shapes are supported')
 
     add_cuds_element('', name)
     return c
+
+
+def serialize_cuds_instance_collection(ci):
+    """Returns serialized string representation of CUDS instance
+    collection `ci`."""
+    baselist = []
+    root_elements = [l for l in ci.get_labels() if '.' not in l]
+
+    def dictrepr(label):
+        """Returns a nested dict representation of given instance."""
+        inst = ci.get_instance(label)
+        d = {k: str(inst.soft_get_property(k))
+             for k in inst.soft_get_property_names()}
+        for attr_label in ci.find_relations(label, 'has-attribute'):
+            attr = attr_label[attr_label.rindex('.') + 1: ]
+            d[attr] = dictrepr(attr_label)
+        return d
+
+    for root in root_elements:
+        baselist.append(dictrepr(root))
+    #return yaml.dump(baselist)
+    return json.dumps(baselist, indent=2)
+
+
+
 
 
 if __name__ == '__main__':
@@ -457,7 +543,7 @@ if __name__ == '__main__':
         initial_values={})
 
     print('labels:\n', ci.get_labels())
-    crystal_structure = ci.get_entity('CRYSTAL_STRUCTURE')
+    crystal_structure = ci.get_instance('CRYSTAL_STRUCTURE')
 
     #with softpy.Storage(driver='hdf5',
     #                    uri='instances.h5',
