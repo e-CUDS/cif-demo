@@ -76,7 +76,7 @@ def generate_cuds_entities(cuds, cuba, namespace='https://emmc.info/metadata',
         variables = d.pop('variables', [])
 
         if parent:
-            relations.append((stripname(parent), 'parent-of', key))
+            relations.append((key, 'has-parent', stripname(parent)))
 
         if data is not None:
             properties.append(dict(
@@ -164,6 +164,7 @@ def get_element_dict(cuds, key, include_parent):
     also be included."""
     cudsdict = cuds['CUDS_KEYS']
     element_dict = cudsdict[key].copy()
+    parentname = element_dict['parent']
     if include_parent:
         parent = element_dict.pop('parent')
         while parent:
@@ -171,6 +172,7 @@ def get_element_dict(cuds, key, include_parent):
             for k, v in parentdict.items():
                 element_dict.setdefault(k, v)
             parent = element_dict.pop('parent')
+    element_dict['parent'] = parentname
     return element_dict
 
 
@@ -513,6 +515,68 @@ def serialize_cuds_instance_collection(ci):
     #return json.dumps(baselist, indent=4)
 
 
+def get_cuds_graph(cuds_collection, subgraph=None):
+    """Returns a pydot graph object for visualising a CUDS graph.
+
+    Parameters
+    ----------
+    cuds_collection : Collection
+        A CUDS metadata collection as returned by
+        get_cuds_collection(include_parent=False).
+    subgraph : string
+        If given, only output the CUDS element `subgraph` and its
+        childs will be included.
+
+    Notes
+    -----
+    Requires that you have pydot installed.
+
+    Examples
+    --------
+    >>> cuds_collection = get_cuds_collection(include_parent=False)
+    >>> graph = get_cuds_graph(cuds_collection)
+    >>> graph.write_png('CUDS.png')
+    """
+    import pydot
+
+    def get_node(element):
+        e = cuds_collection.get_instance(element)
+        s = ''.join(r'+ %s\l' % prop for prop in e.soft_get_property_names())
+        nodename = (
+            element + '_' if element.lower() in ('node', 'edge') else element)
+        node = pydot.Node(nodename,
+                          label=r'{%s|%s}' % (element, s),
+                          shape='record',
+                          fontname='Bitstream Vera Sans',
+                          fontsize=8,
+                          style='filled',
+                          fillcolor='#ffffe0',
+                      )
+        return node
+
+    def get_edge(parent, child):
+        edge = pydot.Edge(child, parent,
+                          fontname='Bitstream Vera Sans',
+                          fontsize=8)
+        return edge
+
+    def add_childs(graph, node):
+        nodename = node.get_name()
+        for child in cuds_collection.find_relations(nodename, '^has-parent'):
+            childnode = get_node(child)
+            graph.add_node(childnode)
+            graph.add_edge(get_edge(childnode, node))
+            add_childs(graph, childnode)
+
+    root = subgraph if subgraph else 'CUDS_ITEM'
+    graph = pydot.Dot(graph_type='digraph',
+                      fontname='Bitstream Vera Sans',
+                      fontsize=8)
+    rootnode = get_node(root)
+    graph.add_node(rootnode)
+    add_childs(graph, rootnode)
+    return graph
+
 
 
 
@@ -560,3 +624,9 @@ if __name__ == '__main__':
     #                    #options='append=yes',
     #) as s:
     #    ci.save(s)
+
+    # Create CUDS graph
+    cc = get_cuds_collection(include_parent=False)
+    graph = get_cuds_graph(cc)
+    #graph.write_png('CUDS.png')
+    graph.write_pdf('CUDS.pdf')
