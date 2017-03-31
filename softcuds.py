@@ -539,12 +539,17 @@ def get_cuds_graph(cuds_collection, subgraph=None):
     """
     import pydot
 
+    def get_nodename(element):
+        if element.lower() in ('node', 'edge'):
+            return element + '_'
+        return element
+
     def get_node(element):
         e = cuds_collection.get_instance(element)
-        s = ''.join(r'+ %s\l' % prop for prop in e.soft_get_property_names())
-        nodename = (
-            element + '_' if element.lower() in ('node', 'edge') else element)
-        node = pydot.Node(nodename,
+        attrs = cuds_collection.find_relations(element, 'has-attribute')
+        names = e.soft_get_property_names() + list(attrs)
+        s = ''.join(r'+ %s\l' % prop for prop in names)
+        node = pydot.Node(get_nodename(element),
                           label=r'{%s|%s}' % (element, s),
                           shape='record',
                           fontname='Bitstream Vera Sans',
@@ -554,27 +559,81 @@ def get_cuds_graph(cuds_collection, subgraph=None):
                       )
         return node
 
-    def get_edge(parent, child):
-        edge = pydot.Edge(child, parent,
+    def get_inheritance_edge(parent, child):
+        edge = pydot.Edge(parent, child,
+                          arrowhead='empty',
+                          #fontname='Bitstream Vera Sans',
+                          #fontsize=8,
+        )
+        return edge
+
+    def get_composition_edge(parent, child, shape=None):
+        kw = {}
+        if shape == '(:)':
+            #kw['headlabel'] = '0..*'
+            #kw['headlabel'] = '*'
+            kw['taillabel'] = '0..*'
+        elif shape:
+            #kw['headlabel'] = shape.lstrip('[').rstrip(']')
+            kw['taillabel'] = shape.lstrip('[').rstrip(']')
+        edge = pydot.Edge(parent, child,
                           fontname='Bitstream Vera Sans',
-                          fontsize=8)
+                          fontsize=8,
+                          arrowhead='diamond',
+                          #arrowtail='none',
+                          #dir='both',
+                          color='#0000ff',
+                          **kw)
         return edge
 
     def add_childs(graph, node):
-        nodename = node.get_name()
-        for child in cuds_collection.find_relations(nodename, '^has-parent'):
+        element = node.get_name().rstrip('_')
+        for child in cuds_collection.find_relations(element, '^has-parent'):
             childnode = get_node(child)
             graph.add_node(childnode)
-            graph.add_edge(get_edge(childnode, node))
+            graph.add_edge(get_inheritance_edge(node, childnode))
+            #graph.add_edge(get_composition_edge(node, childnode))
             add_childs(graph, childnode)
+
+    def add_compositions(graph, node):
+        element = node.get_name().rstrip('_')
+        for attr in cuds_collection.find_relations(element, 'has-attribute'):
+            shapes = cuds_collection.find_relations(
+                '%s.%s' % (element, attr), 'has-shape')
+            if shapes:
+                assert len(shapes) == 1
+                shape = shapes.pop()
+            else:
+                shape = None
+            attrnodes = graph.get_node(get_nodename(attr))
+            if not attrnodes:
+                attrnode = get_node(attr)
+                graph.add_node(attrnode)
+                add_childs(graph, attrnode)
+                add_compositions(graph, attrnode)
+
+            else:
+                assert len(attrnodes) == 1
+                attrnode = attrnodes[0]
+            graph.add_edge(get_composition_edge(node, attrnode, shape))
+        for child in cuds_collection.find_relations(element, '^has-parent'):
+            childnodes = graph.get_node(get_nodename(child))
+            assert len(childnodes) == 1
+            add_compositions(graph, childnodes[0])
+
 
     root = subgraph if subgraph else 'CUDS_ITEM'
     graph = pydot.Dot(graph_type='digraph',
                       fontname='Bitstream Vera Sans',
-                      fontsize=8)
+                      fontsize=8,
+                      #splines='line',
+                      #splines='polyline',
+                      splines='ortho',
+                  )
     rootnode = get_node(root)
     graph.add_node(rootnode)
     add_childs(graph, rootnode)
+    add_compositions(graph, rootnode)
     return graph
 
 
@@ -627,6 +686,7 @@ if __name__ == '__main__':
 
     # Create CUDS graph
     cc = get_cuds_collection(include_parent=False)
-    graph = get_cuds_graph(cc)
+    graph = get_cuds_graph(cc, 'CRYSTAL_STRUCTURE')
     #graph.write_png('CUDS.png')
     graph.write_pdf('CUDS.pdf')
+    graph.write_pdf('CRYSTAL_STRUCTURE.pdf')
